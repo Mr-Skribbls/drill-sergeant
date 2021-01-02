@@ -1,0 +1,13 @@
+#add-workout {
+  display: flex;
+  flex-direction: column;
+}
+
+.step {
+  display: flex;
+  flex-direction: row;
+}
+
+.step-input {
+  flex-grow: 1;
+}
