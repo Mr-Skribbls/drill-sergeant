@@ -1,29 +1,3 @@
-// import logo from './logo.svg';
-// import './App.css';
-
-// function App() {
-//   return (
-//     <div className="App">
-//       <header className="App-header">
-//         <img src={logo} className="App-logo" alt="logo" />
-//         <p>
-//           Edit <code>src/App.js</code> and save to reload.
-//         </p>
-//         <a
-//           className="App-link"
-//           href="https://reactjs.org"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           Learn React
-//         </a>
-//       </header>
-//     </div>
-//   );
-// }
-
-// export default App;
-
 import React, {useState, useEffect} from 'react';
 
 import Title from './components/title/title.component';
@@ -32,20 +6,66 @@ import Main from './components/main/main.component';
 import Workouts from './components/workouts/workouts.components';
 import EditWorkout from './components/editWorkout/editWorkout.component';
 
+import CommanderGenerator from './modules/commanderGenerator';
 import './App.css';
 
+import time from './modules/time';
+
 const App = () => {
+  const commander = CommanderGenerator();
+  
   // ----- Load ----- //
   const [config, setConfig] = useState({});
-  const [workouts, setWorkouts] = useState([]);
-
-  const loadConfig = () => _loadConfig().then((config) => setConfig(config));
-  const loadWorkouts = () => _loadWorkouts().then((workouts) => setWorkouts(workouts));
+  const [workouts, setWorkouts] = useState({});
+  const [command, setCommand] = useState({});
+  const [minsRemaining, setMinsRemaining] = useState(0);
+  const [secsRemaining, setSecsRemaining] = useState(0);
+  
+  const loadConfig = async () => {
+    const p = _loadConfig();
+    p.catch((err) => console.log(err));
+    return await p;
+  };
+  const loadWorkouts = async () => {
+    const p = _loadWorkouts();
+    p.catch((err) => console.log(err));
+    return await p;
+  };
 
   useEffect(() => {
-    loadConfig();
-    loadWorkouts();
+    if(loadConfig && loadWorkouts) {
+      const wp = loadWorkouts();
+      const cp = loadConfig();
+      Promise.all([wp, cp]).then(([workouts, config]) => {
+        setWorkouts(workouts);
+        setConfig(config);
+
+        setCommand(commander.getNextCommand(config, workouts));
+      });
+    } 
   }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if(!command || !command.time) return;
+      const minsFloat = time.msTo.minutes(command.time - Date.now());
+      if(minsFloat > 0) {
+        const minsFloor = Math.floor(minsFloat);
+        const seconds = Math.floor((minsFloat - minsFloor) * 60);
+        
+        setMinsRemaining(minsFloor);
+        setSecsRemaining(seconds);
+      } else {
+        // notify
+        sendNotification(command.workout.name, command.workout.description);
+
+        // create new command
+        setCommand(commander.getNextCommand(config, workouts));
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [command]);
 
   // ----- Config Methods ----- //
   const _loadConfig = async () => {
@@ -81,7 +101,8 @@ const App = () => {
 
     await p;
 
-    loadWorkouts();
+    const w = await loadWorkouts();
+    setWorkouts(w);
 
     return savedWorkout;
   };
@@ -122,10 +143,17 @@ const App = () => {
     },
   });
 
+  const sendNotification = (title, message) => {
+    new Notification(title, {
+      body: message,
+      requireInteraction: true,
+    });
+  };
+
   return(
     <React.Fragment>
       <Title menu={menu}></Title>
-      {currentPage.page === 'main' && <Main></Main>}
+      {currentPage.page === 'main' && <Main minsRemaining={minsRemaining} secsRemaining={secsRemaining}></Main>}
       {currentPage.page === 'config' && <Config config={config} setConfig={setConfig}></Config>}
       {currentPage.page === 'workouts' && <Workouts workouts={workouts} openEditWorkoutPage={openEditWorkoutPage}></Workouts>}
       {currentPage.page === 'editWorkout' && <EditWorkout workout={currentPage.args?.workout} saveWorkout={saveWorkout}></EditWorkout>}
