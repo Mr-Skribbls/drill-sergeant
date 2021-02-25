@@ -6,7 +6,7 @@ const workoutStorage = require('./storage/workouts');
 
 const {window} = require('./base.window');
 
-const DEBUG = true;
+const DEBUG = false;
 
 let mainWin;
 
