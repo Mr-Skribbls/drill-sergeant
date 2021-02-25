@@ -11,7 +11,9 @@ const Main = (props) => {
   };
 
   return (
-    <div>{minsRemaining}:{doubleDigit(secsRemaining)}</div>
+    <div className="main-container">
+      <span>{doubleDigit(minsRemaining)}:{doubleDigit(secsRemaining)}</span>
+    </div>
   );
 };
 

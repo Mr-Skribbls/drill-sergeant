@@ -16,7 +16,7 @@ let mainWin;
 | ------------------------------------------------------------------------
 */
 const createMainWindow = () => mainWin = window(null, DEBUG)({
-  width: 450, 
+  width: 300, 
   height: 180,
   x: 0,
   y: 0,
