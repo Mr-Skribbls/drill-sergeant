@@ -47,7 +47,7 @@ const App = () => {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      if(!command || !command.time) return;
+      if(!command || !command.time || !command.workout) return;
       const minsFloat = time.msTo.minutes(command.time - Date.now());
       if(minsFloat > 0) {
         const minsFloor = Math.floor(minsFloat);
